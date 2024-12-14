@@ -17,13 +17,13 @@ with st.expander('Data'):
 kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
 
 # Definisikan semua fitur dan fitur penting
-# all_features = [
-#     'SafetySecurity', 'PersonelFreedom', 'Governance',
-#     'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
-#     'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
-#     'Health', 'Education', 'NaturalEnvironment'
-# ]
-all_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
+all_features = [
+    'SafetySecurity', 'PersonelFreedom', 'Governance',
+    'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
+    'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
+    'Health', 'Education', 'NaturalEnvironment'
+]
+# all_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
 
 # Streamlit untuk antarmuka pengguna
 st.title("Prediksi Cluster Negara")
