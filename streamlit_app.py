@@ -1,24 +1,65 @@
 import streamlit as st
 import pandas as pd
-import pickle
 import numpy as np
+import pickle
+import os
 from sklearn.preprocessing import StandardScaler
 
 # Konfigurasi halaman
 st.set_page_config(
     page_title="Prediksi Cluster Ekonomi Global",
     page_icon="🌍",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Inisialisasi session state jika belum ada
-if 'model' not in st.session_state:
+# Styling
+st.markdown("""
+    <style>
+    .stButton>button {
+        width: 100%;
+        background-color: #0066cc;
+        color: white;
+    }
+    .stButton>button:hover {
+        background-color: #0052a3;
+        color: white;
+    }
+    .st-emotion-cache-1v0mbdj.e115fcil1 {
+        width: 100%;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Fungsi untuk validasi input
+def validate_input(input_data):
+    for feature, value in input_data.items():
+        if value < 0 or value > 10:
+            return False, f"Nilai {feature} harus antara 0 dan 10"
+    return True, ""
+
+# Inisialisasi session state
+if 'model_loaded' not in st.session_state:
+    st.session_state.model_loaded = False
+
+if 'prediction_result' not in st.session_state:
+    st.session_state.prediction_result = None
+
+# Load model dan scaler
+if not st.session_state.model_loaded:
     try:
-        st.session_state.model = pickle.load(open('kmeans_model.pkl', 'rb'))
-        st.session_state.scaler = pickle.load(open('scaler.pkl', 'rb'))
-    except FileNotFoundError:
-        st.error("File model tidak ditemukan. Pastikan file kmeans_model.pkl dan scaler.pkl berada dalam direktori yang sama.")
-        st.stop()
+        with st.spinner('Memuat model...'):
+            model_path = 'kmeans_model.pkl'
+            scaler_path = 'scaler.pkl'
+            
+            if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+                st.error("File model tidak ditemukan! Pastikan file kmeans_model.pkl dan scaler.pkl tersedia.")
+                st.stop()
+            
+            st.session_state.model = pickle.load(open(model_path, 'rb'))
+            st.session_state.scaler = pickle.load(open(scaler_path, 'rb'))
+            st.session_state.model_loaded = True
+            
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memuat model: {str(e)}")
         st.stop()
@@ -30,91 +71,101 @@ Aplikasi ini memprediksi cluster ekonomi suatu negara berdasarkan indikator-indi
 Silahkan masukkan nilai antara 0-10 untuk setiap indikator.
 """)
 
-# Daftar fitur penting yang digunakan
+# Daftar fitur penting
 important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
+
+# Deskripsi untuk setiap indikator
+feature_descriptions = {
+    'SafetySecurity': 'Tingkat Keamanan dan Keselamatan',
+    'Governance': 'Tata Kelola Pemerintahan',
+    'EconomicQuality': 'Kualitas Ekonomi',
+    'LivingConditions': 'Kondisi Kehidupan'
+}
+
+# Definisi deskripsi untuk setiap cluster
+cluster_descriptions = {
+    0: "Negara dengan Ekonomi Tertinggal",
+    1: "Negara dengan Ekonomi Berkembang",
+    2: "Negara dengan Ekonomi Maju"
+}
 
 # Membuat dua kolom untuk tata letak
 col1, col2 = st.columns([1, 2])
 
+# Kolom input
 with col1:
     st.subheader("📊 Input Indikator Ekonomi")
     
-    # Membuat form input
-    with st.form("form_prediksi"):
+    # Form input
+    with st.form(key="prediction_form"):
         input_data = {}
-        
-        # Deskripsi untuk setiap indikator
-        feature_descriptions = {
-            'SafetySecurity': 'Tingkat Keamanan dan Keselamatan',
-            'Governance': 'Tata Kelola Pemerintahan',
-            'EconomicQuality': 'Kualitas Ekonomi',
-            'LivingConditions': 'Kondisi Kehidupan'
-        }
         
         # Membuat slider untuk setiap fitur
         for feature in important_features:
             input_data[feature] = st.slider(
-                f"{feature_descriptions[feature]}",
+                feature_descriptions[feature],
                 min_value=0.0,
                 max_value=10.0,
                 value=5.0,
                 step=0.1,
+                key=f"slider_{feature}",
                 help=f"Masukkan nilai untuk {feature_descriptions[feature]} (0-10)"
             )
         
         # Tombol submit
-        tombol_submit = st.form_submit_button("Prediksi Cluster")
+        submit_button = st.form_submit_button("Prediksi Cluster")
 
-# Proses prediksi ketika tombol submit ditekan
-if tombol_submit:
+# Proses prediksi
+if submit_button:
     try:
-        # Konversi input ke DataFrame
-        input_df = pd.DataFrame([input_data])
+        # Validasi input
+        is_valid, error_message = validate_input(input_data)
         
-        # Scaling input menggunakan scaler yang sudah dilatih
-        scaled_input = st.session_state.scaler.transform(input_df)
-        
-        # Melakukan prediksi
-        cluster = st.session_state.model.predict(scaled_input)[0]
-        
-        # Menampilkan hasil di kolom kedua
-        with col2:
-            st.subheader("🎯 Hasil Prediksi")
-            
-            # Definisi deskripsi untuk setiap cluster
-            deskripsi_cluster = {
-                0: "Negara dengan Ekonomi Tertinggal",
-                1: "Negara dengan Ekonomi Berkembang",
-                2: "Negara dengan Ekonomi Maju"
-            }
-            
-            # Menampilkan prediksi dengan styling
-            st.success(f"""
-                ### Cluster Hasil Prediksi: {cluster}
-                **Klasifikasi:** {deskripsi_cluster[cluster]}
-            """)
-            
-            # Menampilkan grafik bar untuk visualisasi input
-            st.subheader("📊 Visualisasi Input")
-            chart_data = pd.DataFrame(
-                [input_data.values()],
-                columns=[feature_descriptions[feat] for feat in input_data.keys()]
-            )
-            st.bar_chart(chart_data.T)
-            
-            # Menampilkan ringkasan input dalam tabel
-            st.subheader("📋 Ringkasan Input")
-            display_df = input_df.copy()
-            display_df.columns = [feature_descriptions[col] for col in display_df.columns]
-            st.dataframe(display_df)
-            
+        if not is_valid:
+            st.error(error_message)
+        else:
+            with st.spinner('Melakukan prediksi...'):
+                # Konversi input ke DataFrame
+                input_df = pd.DataFrame([input_data])
+                
+                # Scaling input
+                scaled_input = st.session_state.scaler.transform(input_df)
+                
+                # Prediksi
+                cluster = st.session_state.model.predict(scaled_input)[0]
+                st.session_state.prediction_result = cluster
+                
+                # Tampilkan hasil di kolom kedua
+                with col2:
+                    st.subheader("🎯 Hasil Prediksi")
+                    
+                    # Tampilkan prediksi dengan styling
+                    st.success(f"""
+                        ### Cluster Hasil Prediksi: {cluster}
+                        **Klasifikasi:** {cluster_descriptions[cluster]}
+                    """)
+                    
+                    # Visualisasi input
+                    st.subheader("📊 Visualisasi Input")
+                    chart_data = pd.DataFrame(
+                        [input_data.values()],
+                        columns=[feature_descriptions[feat] for feat in input_data.keys()]
+                    )
+                    st.bar_chart(chart_data.T)
+                    
+                    # Tampilkan ringkasan input
+                    st.subheader("📋 Ringkasan Input")
+                    summary_df = input_df.copy()
+                    summary_df.columns = [feature_descriptions[col] for col in summary_df.columns]
+                    st.dataframe(summary_df)
+                    
     except Exception as e:
         st.error(f"Terjadi kesalahan saat melakukan prediksi: {str(e)}")
 
-# Menambahkan footer
+# Footer
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center'>
-    <p>Dibuat dengan ❤️ oleh [Nama Anda] | Proyek Machine Learning</p>
+    <p>Dibuat dengan ❤️ menggunakan Streamlit | Proyek Machine Learning</p>
 </div>
 """, unsafe_allow_html=True)
