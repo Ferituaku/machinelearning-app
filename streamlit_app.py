@@ -3,25 +3,31 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-# Judul Aplikasi
+# Load Model dan Scaler
+kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
+scaler = pickle.load(open('scaler.pkl', 'rb'))  # Scaler yang sama saat training
+
+# Definisikan Semua Fitur
+all_features = [
+    'SafetySecurity', 'PersonelFreedom', 'Governance',
+    'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
+    'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
+    'Health', 'Education', 'NaturalEnvironment'
+]
+important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
+
+# Konfigurasi Streamlit
 st.set_page_config(page_title="Prediksi Cluster Negara", layout="centered")
+
+# Judul Aplikasi
 st.title("🌍 Prediksi Cluster Negara")
 st.write("""
 Masukkan nilai indikator ekonomi negara berdasarkan skala 0-10, untuk mengetahui cluster ekonomi negara.
 """)
 
-# Memuat Model dan Scaler
-kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
-scaler = pickle.load(open('scaler.pkl', 'rb'))  # Scaler yang sama digunakan saat pelatihan model
-
-# Definisikan Fitur Penting
-important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
-
 # Sidebar untuk Input Data
 st.sidebar.header("📊 Input Nilai Indikator")
-input_data = {feature: 0.0 for feature in important_features}
-
-# Slider untuk setiap fitur
+input_data = {feature: 0.0 for feature in all_features}  # Inisialisasi semua fitur dengan 0.0
 for feature in important_features:
     input_data[feature] = st.sidebar.slider(
         f"{feature}",
@@ -34,6 +40,9 @@ for feature in important_features:
 
 # Konversi Input ke DataFrame
 input_df = pd.DataFrame([input_data])
+
+# Pastikan Input Memiliki Fitur yang Sama
+input_df = input_df[all_features]  # Urutkan kolom sesuai dengan data pelatihan
 
 # Standarisasi Input
 scaled_input = scaler.transform(input_df)
@@ -51,7 +60,7 @@ Penjelasan Cluster:
 - **Cluster 2**: Negara ekonomi maju
 """)
 
-# Tampilkan Data Input
+# Tampilkan Tabel Input
 st.write("#### 📋 Nilai Indikator yang Dimasukkan")
 st.table(input_df)
 
@@ -62,4 +71,3 @@ st.bar_chart(input_df.T)
 # Footer
 st.markdown("---")
 st.markdown("✨ Created by **[Nama Anda]** - Machine Learning Application")
-
