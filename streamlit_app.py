@@ -3,22 +3,17 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-st.title('Project Aplikasi Model Prediksi')
-
-st.write('Hai, Selamat Datang!')
-
-with st.expander('Data'):
-  st.write('**Raw Data**')
-  df = pd.read_csv("https://raw.githubusercontent.com/Ferituaku/machinelearning-app/refs/heads/master/data.csv")
-  df
-
 # Load model dan scaler yang sama saat training
 kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
 scaler = pickle.load(open('scaler.pkl', 'rb'))  # Pastikan scaler yang sama
 
 # Fitur yang digunakan dalam model
-
-important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions'] 
+all_features = [
+    'SafetySecurity', 'PersonelFreedom', 'Governance',
+    'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
+    'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
+    'Health', 'Education', 'NaturalEnvironment'
+]
 
 # Tampilan GUI
 st.set_page_config(page_title="Prediksi Cluster Negara", layout="centered")
@@ -29,9 +24,9 @@ Masukkan nilai indikator ekonomi negara berdasarkan skala 0-10, untuk mengetahui
 
 # Input data pengguna
 st.sidebar.header("📊 Input Nilai Indikator")
-input_data = {feature: 0.0 for feature in important_features}
+input_data = {feature: 0.0 for feature in all_features}
 
-for feature in important_features:
+for feature in all_features:
     input_data[feature] = st.sidebar.slider(
         f"{feature}", min_value=0.0, max_value=10.0, step=0.1, value=5.0
     )
@@ -62,4 +57,3 @@ st.table(input_df)
 # Footer
 st.markdown("---")
 st.markdown("Created by **[Nama Anda]** - Machine Learning Application")
-
