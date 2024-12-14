@@ -12,47 +12,54 @@ with st.expander('Data'):
   df = pd.read_csv("https://raw.githubusercontent.com/Ferituaku/machinelearning-app/refs/heads/master/data.csv")
   df
 
-
-# Load KMeans model
+# Load model dan scaler yang sama saat training
 kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
+scaler = pickle.load(open('scaler.pkl', 'rb'))  # Pastikan scaler yang sama
 
-# Definisikan semua fitur dan fitur penting
-# all_features = [
-#     'SafetySecurity', 'PersonelFreedom', 'Governance',
-#     'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
-#     'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
-#     'Health', 'Education', 'NaturalEnvironment'
-# ]
-important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
+# Fitur yang digunakan dalam model
 
-# Streamlit untuk antarmuka pengguna
-st.title("Prediksi Cluster Negara")
-st.write("Masukkan nilai-nilai indikator ekonomi negara untuk mengetahui clusternya.")
+important_features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions'] 
+
+# Tampilan GUI
+st.set_page_config(page_title="Prediksi Cluster Negara", layout="centered")
+st.title("🌍 Prediksi Cluster Negara")
+st.write("""
+Masukkan nilai indikator ekonomi negara berdasarkan skala 0-10, untuk mengetahui cluster ekonomi negara.
+""")
 
 # Input data pengguna
+st.sidebar.header("📊 Input Nilai Indikator")
 input_data = {feature: 0.0 for feature in important_features}
+
 for feature in important_features:
-    input_data[feature] = st.slider(
-        feature, min_value=0.0, max_value=10.0, step=0.1, value=5.0,
-        help=f"Masukkan nilai untuk {feature} (0-10)"
+    input_data[feature] = st.sidebar.slider(
+        f"{feature}", min_value=0.0, max_value=10.0, step=0.1, value=5.0
     )
 
-# Buat DataFrame input pengguna
+# Convert input menjadi DataFrame
 input_df = pd.DataFrame([input_data])
 
-# Standarisasi input
-scaler = StandardScaler()
-scaled_input = scaler.fit_transform(input_df)
+# Standarisasi input dengan scaler yang sama
+scaled_input = scaler.transform(input_df)
 
 # Prediksi cluster
 predicted_cluster = kmeans_model.predict(scaled_input)[0]
 
 # Tampilkan hasil prediksi
-st.subheader("Hasil Prediksi")
-st.write(f"Negara yang dimasukkan termasuk dalam **Cluster {predicted_cluster}**.")
-st.write("""
-Cluster ini mengindikasikan karakteristik ekonomi negara berdasarkan data indikator utama:
-- Cluster 0: Negara ekonomi tertinggal
-- Cluster 1: Negara ekonomi berkembang
-- Cluster 2: Negara ekonomi maju
+st.subheader("📋 Hasil Prediksi")
+st.markdown(f"""
+### Negara yang dimasukkan termasuk dalam **Cluster {predicted_cluster}**.
+#### Penjelasan Cluster:
+- **Cluster 0**: Negara ekonomi tertinggal
+- **Cluster 1**: Negara ekonomi berkembang
+- **Cluster 2**: Negara ekonomi maju
 """)
+
+# Tambahkan tabel input pengguna untuk visualisasi
+st.write("#### Nilai Indikator yang Dimasukkan")
+st.table(input_df)
+
+# Footer
+st.markdown("---")
+st.markdown("Created by **[Nama Anda]** - Machine Learning Application")
+
