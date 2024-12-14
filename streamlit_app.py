@@ -3,7 +3,6 @@ import pandas as pd
 import pickle
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-import plotly.express as px
 
 # Konfigurasi halaman
 st.set_page_config(
@@ -13,7 +12,6 @@ st.set_page_config(
 )
 
 # Inisialisasi session state jika belum ada
-# Ini penting untuk menyimpan model dan scaler agar tidak di-load ulang setiap kali halaman refresh
 if 'model' not in st.session_state:
     try:
         st.session_state.model = pickle.load(open('kmeans_model.pkl', 'rb'))
@@ -91,33 +89,21 @@ if tombol_submit:
             }
             
             # Menampilkan prediksi dengan styling
-            st.markdown(f"""
-            <div style='padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                <h3>Cluster Hasil Prediksi: {cluster}</h3>
-                <p><strong>Klasifikasi:</strong> {deskripsi_cluster[cluster]}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.success(f"""
+                ### Cluster Hasil Prediksi: {cluster}
+                **Klasifikasi:** {deskripsi_cluster[cluster]}
+            """)
             
-            # Membuat grafik radar menggunakan plotly
-            fig = px.line_polar(
-                r=[input_data[feat] for feat in important_features],
-                theta=[feature_descriptions[feat] for feat in important_features],
-                line_close=True,
-                title="Grafik Radar Indikator Ekonomi"
+            # Menampilkan grafik bar untuk visualisasi input
+            st.subheader("📊 Visualisasi Input")
+            chart_data = pd.DataFrame(
+                [input_data.values()],
+                columns=[feature_descriptions[feat] for feat in input_data.keys()]
             )
-            fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 10]
-                    )
-                )
-            )
-            st.plotly_chart(fig)
+            st.bar_chart(chart_data.T)
             
             # Menampilkan ringkasan input dalam tabel
             st.subheader("📋 Ringkasan Input")
-            # Mengubah nama kolom untuk tampilan
             display_df = input_df.copy()
             display_df.columns = [feature_descriptions[col] for col in display_df.columns]
             st.dataframe(display_df)
