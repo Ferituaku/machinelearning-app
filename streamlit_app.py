@@ -14,22 +14,18 @@ with st.expander('Data'):
 
 # Load KMeans model
 kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
-
+scaler = pickle.load(open('scaler.pkl', 'rb'))  
 # Definisikan semua fitur
-all_features = [
-    'SafetySecurity', 'PersonelFreedom', 'Governance',
-    'SocialCapital', 'InvestmentEnvironment', 'EnterpriseConditions',
-    'MarketAccessInfrastructure', 'EconomicQuality', 'LivingConditions',
-    'Health', 'Education', 'NaturalEnvironment'
-]
+features = ['SafetySecurity', 'Governance', 'EconomicQuality', 'LivingConditions']
+
 
 # Streamlit untuk antarmuka pengguna
 st.title("Prediksi Cluster Negara")
 st.write("Masukkan nilai-nilai indikator ekonomi negara untuk mengetahui clusternya.")
 
 # Input data pengguna
-input_data = {feature: 0.0 for feature in all_features}
-for feature in all_features:
+input_data = {feature: 0.0 for feature in features}
+for feature in features:
     input_data[feature] = st.slider(
         feature, min_value=0.0, max_value=10.0, step=0.1, value=5.0,
         help=f"Masukkan nilai untuk {feature} (0-10)"
@@ -38,8 +34,6 @@ for feature in all_features:
 # Buat DataFrame input pengguna
 input_df = pd.DataFrame([input_data])
 
-# Standarisasi input
-scaler = StandardScaler()
 
 # Fit scaler pada data training
 scaled_input = scaler.fit_transform(input_df)
