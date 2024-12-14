@@ -36,7 +36,7 @@ for feature in important_features:
 input_df = pd.DataFrame([input_data])
 
 # Pastikan kolom input sesuai dengan data pelatihan
-input_df = input_df[all_features]  # Urutkan kolom sesuai urutan yang digunakan saat pelatihan
+input_df = input_df[important_features]  # Urutkan kolom sesuai urutan yang digunakan saat pelatihan
 
 # Scale input dengan scaler yang telah dilatih
 scaled_input = scaler.transform(input_df)
