@@ -64,16 +64,16 @@ with col1:
     social_capital = st.slider(
         "Social Capital Score",
         min_value=0.0,
-        max_value=10.0,
-        value=5.0,
+        max_value=100.0,
+        value=50.0,
         help="Measure of social networks and community engagement"
     )
     
     governance = st.slider(
         "Governance Score",
         min_value=0.0,
-        max_value=10.0,
-        value=5.0,
+        max_value=100.0,
+        value=50.0,
         help="Measure of government effectiveness and institutional quality"
     )
 
@@ -81,8 +81,8 @@ with col2:
     economic_quality = st.slider(
         "Economic Quality Score",
         min_value=0.0,
-        max_value=10.0,
-        value=5.0,
+        max_value=100.0,
+        value=50.0,
         help="Measure of economic performance and stability"
     )
     
