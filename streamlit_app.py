@@ -12,6 +12,25 @@ st.set_page_config(
     layout="wide"
 )
 
+# Define cluster information at the start
+CLUSTER_INFO = {
+    0: {
+        "name": "Developing Economy",
+        "description": "Medium Performance",
+        "color": "#FFA07A"
+    },
+    1: {
+        "name": "Emerging Economy",
+        "description": "Lower Performance",
+        "color": "#98FB98"
+    },
+    2: {
+        "name": "Advanced Economy",
+        "description": "Higher Performance",
+        "color": "#87CEEB"
+    }
+}
+
 # Title and description
 st.title("🌍 Global Economy Cluster Prediction")
 st.markdown("""
@@ -20,12 +39,17 @@ Please input the values for each indicator using the sliders below.
 """)
 
 # Load the saved model and scaler
-try:
-    model = pickle.load(open('kmeans_model.pkl', 'rb'))
-    scaler = pickle.load(open('scaler.pkl', 'rb'))
-except:
-    st.error("Error: Model files not found. Please ensure kmeans_model.pkl and scaler.pkl are in the same directory.")
-    st.stop()
+@st.cache_resource
+def load_model():
+    try:
+        model = pickle.load(open('kmeans_model.pkl', 'rb'))
+        scaler = pickle.load(open('scaler.pkl', 'rb'))
+        return model, scaler
+    except Exception as e:
+        st.error(f"Error: Model files not found. Please ensure kmeans_model.pkl and scaler.pkl are in the same directory.")
+        st.stop()
+
+model, scaler = load_model()
 
 # Create input form
 st.subheader("Input Country Data")
@@ -75,52 +99,54 @@ if st.button("Predict Cluster"):
     if country_name.strip() == "":
         st.warning("Please enter a country name.")
     else:
-        # Prepare input data
-        input_data = np.array([[
-            social_capital,
-            governance,
-            economic_quality,
-            living_conditions
-        ]])
-        
-        # Scale the input data
-        input_scaled = scaler.transform(input_data)
-        
-        # Make prediction
-        cluster = model.predict(input_scaled)[0]
-        
-        # Show prediction with custom styling
-        st.markdown("---")
-        st.subheader("Prediction Results")
-        
-        # Define cluster descriptions
-        cluster_descriptions = {
-            0: "Developing Economy (Medium Performance)",
-            1: "Emerging Economy (Lower Performance)",
-            2: "Advanced Economy (Higher Performance)"
-        }
-        
-        # Show results with colored box
-        result_color = ["#FFA07A", "#98FB98", "#87CEEB"][cluster]
-        st.markdown(
-            f"""
-            <div style="padding: 20px; border-radius: 10px; background-color: {result_color};">
-                <h3 style="color: black;">Cluster Prediction for {country_name}</h3>
-                <p style="color: black; font-size: 18px;">
-                    Cluster {cluster}: {cluster_descriptions[cluster]}
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        
-        # Show input values summary
-        st.markdown("### Input Summary")
-        summary_df = pd.DataFrame({
-            'Indicator': ['Social Capital', 'Governance', 'Economic Quality', 'Living Conditions'],
-            'Score': [social_capital, governance, economic_quality, living_conditions]
-        })
-        st.table(summary_df)
+        try:
+            # Prepare input data
+            input_data = np.array([[
+                social_capital,
+                governance,
+                economic_quality,
+                living_conditions
+            ]])
+            
+            # Scale the input data
+            input_scaled = scaler.transform(input_data)
+            
+            # Make prediction
+            cluster = model.predict(input_scaled)[0]
+            
+            # Get cluster information
+            cluster_data = CLUSTER_INFO.get(cluster, {
+                "name": "Unknown",
+                "description": f"Cluster {cluster}",
+                "color": "#CCCCCC"
+            })
+            
+            # Show prediction with custom styling
+            st.markdown("---")
+            st.subheader("Prediction Results")
+            
+            st.markdown(
+                f"""
+                <div style="padding: 20px; border-radius: 10px; background-color: {cluster_data['color']};">
+                    <h3 style="color: black;">Cluster Prediction for {country_name}</h3>
+                    <p style="color: black; font-size: 18px;">
+                        {cluster_data['name']}: {cluster_data['description']}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            # Show input values summary
+            st.markdown("### Input Summary")
+            summary_df = pd.DataFrame({
+                'Indicator': ['Social Capital', 'Governance', 'Economic Quality', 'Living Conditions'],
+                'Score': [social_capital, governance, economic_quality, living_conditions]
+            })
+            st.table(summary_df)
+            
+        except Exception as e:
+            st.error(f"An error occurred during prediction: {str(e)}")
 
 # Add footer with information
 st.markdown("---")
