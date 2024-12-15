@@ -1,63 +1,137 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import pickle
-from sklearn.preprocessing import StandardScaler
+import warnings
+warnings.filterwarnings('ignore')
 
-# Load model dan scaler
-kmeans_model = pickle.load(open('kmeans_model.pkl', 'rb'))
-scaler = pickle.load(open('scaler.pkl', 'rb'))  # Pastikan Anda menyimpan scaler saat melatih model
+# Set page config
+st.set_page_config(
+    page_title="Global Economy Cluster Prediction",
+    page_icon="🌍",
+    layout="wide"
+)
 
-# Definisikan fitur
-
-important_features = ['SocialCapital', 'Governance', 'EconomicQuality', 'LivingConditions']
-
-# Tampilan GUI
-st.set_page_config(page_title="Prediksi Cluster Negara", layout="centered")
-st.title("Prediksi Cluster Negara")
+# Title and description
+st.title("🌍 Global Economy Cluster Prediction")
 st.markdown("""
-Masukkan nilai-nilai indikator ekonomi negara untuk mengetahui cluster-nya. 
-Cluster ini dapat digunakan untuk analisis karakteristik negara berdasarkan data indikator utama.
+This application predicts the economic cluster of a country based on key economic indicators.
+Please input the values for each indicator using the sliders below.
 """)
 
-# Input data
-st.sidebar.header("Masukkan Data Indikator")
-input_data = {feature: 0.0 for feature in important_features}  # Inisialisasi semua fitur dengan nilai 0.0
-for feature in important_features:
-    input_data[feature] = st.sidebar.slider(
-        feature,
+# Load the saved model and scaler
+try:
+    model = pickle.load(open('kmeans_model.pkl', 'rb'))
+    scaler = pickle.load(open('scaler.pkl', 'rb'))
+except:
+    st.error("Error: Model files not found. Please ensure kmeans_model.pkl and scaler.pkl are in the same directory.")
+    st.stop()
+
+# Create input form
+st.subheader("Input Country Data")
+
+# Input for country name
+country_name = st.text_input("Country Name", "")
+
+# Create columns for better layout
+col1, col2 = st.columns(2)
+
+with col1:
+    social_capital = st.slider(
+        "Social Capital Score",
         min_value=0.0,
-        max_value=10.0,
-        step=0.1,
-        value=5.0,
-        help=f"Masukkan nilai untuk {feature} (0-10)"
+        max_value=100.0,
+        value=50.0,
+        help="Measure of social networks and community engagement"
+    )
+    
+    governance = st.slider(
+        "Governance Score",
+        min_value=0.0,
+        max_value=100.0,
+        value=50.0,
+        help="Measure of government effectiveness and institutional quality"
     )
 
-# Konversi input ke DataFrame
-input_df = pd.DataFrame([input_data])
+with col2:
+    economic_quality = st.slider(
+        "Economic Quality Score",
+        min_value=0.0,
+        max_value=100.0,
+        value=50.0,
+        help="Measure of economic performance and stability"
+    )
+    
+    living_conditions = st.slider(
+        "Living Conditions Score",
+        min_value=0.0,
+        max_value=100.0,
+        value=50.0,
+        help="Measure of quality of life and standard of living"
+    )
 
-# Pastikan kolom input sesuai dengan data pelatihan
-input_df = input_df[important_features]  # Urutkan kolom sesuai urutan yang digunakan saat pelatihan
+# Create prediction button
+if st.button("Predict Cluster"):
+    if country_name.strip() == "":
+        st.warning("Please enter a country name.")
+    else:
+        # Prepare input data
+        input_data = np.array([[
+            social_capital,
+            governance,
+            economic_quality,
+            living_conditions
+        ]])
+        
+        # Scale the input data
+        input_scaled = scaler.transform(input_data)
+        
+        # Make prediction
+        cluster = model.predict(input_scaled)[0]
+        
+        # Show prediction with custom styling
+        st.markdown("---")
+        st.subheader("Prediction Results")
+        
+        # Define cluster descriptions
+        cluster_descriptions = {
+            0: "Developing Economy (Medium Performance)",
+            1: "Emerging Economy (Lower Performance)",
+            2: "Advanced Economy (Higher Performance)"
+        }
+        
+        # Show results with colored box
+        result_color = ["#FFA07A", "#98FB98", "#87CEEB"][cluster]
+        st.markdown(
+            f"""
+            <div style="padding: 20px; border-radius: 10px; background-color: {result_color};">
+                <h3 style="color: black;">Cluster Prediction for {country_name}</h3>
+                <p style="color: black; font-size: 18px;">
+                    Cluster {cluster}: {cluster_descriptions[cluster]}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Show input values summary
+        st.markdown("### Input Summary")
+        summary_df = pd.DataFrame({
+            'Indicator': ['Social Capital', 'Governance', 'Economic Quality', 'Living Conditions'],
+            'Score': [social_capital, governance, economic_quality, living_conditions]
+        })
+        st.table(summary_df)
 
-# Scale input dengan scaler yang telah dilatih
-scaled_input = scaler.transform(input_df)
+# Add footer with information
+st.markdown("---")
+st.markdown("""
+### About
+This model uses K-means clustering with 3 clusters to categorize countries based on their economic indicators.
+The prediction is based on four key features identified through PCA analysis:
+- Social Capital
+- Governance
+- Economic Quality
+- Living Conditions
 
-# Prediksi cluster
-predicted_cluster = kmeans_model.predict(scaled_input)[0]
-
-# Tampilkan hasil prediksi
-st.subheader("Hasil Prediksi")
-st.success(f"Negara yang dimasukkan termasuk dalam **Cluster {predicted_cluster}**.")
-st.write("""
-Penjelasan Cluster:
-- **Cluster 0**: Negara ekonomi tertinggal
-- **Cluster 1**: Negara ekonomi berkembang
-- **Cluster 2**: Negara ekonomi maju
+*Note: This is a simplified model for demonstration purposes. Results should be interpreted with appropriate context.*
 """)
-
-# Visualisasi data input
-st.subheader("Visualisasi Input Data")
-st.bar_chart(input_df.T)
-
-# Tombol untuk reset
-if st.button("Reset Data"):
-    st.caching.clear_cache()
