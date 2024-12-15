@@ -15,19 +15,19 @@ st.set_page_config(
 # Define cluster information at the start
 CLUSTER_INFO = {
     0: {
-        "name": "Developing Economy",
-        "description": "Medium Performance",
-        "color": "#FFA07A"
+        "name": "Medium Economy",
+        "description": "Negara dengan karakteristik ekonomi menengah",
+        "color": "#FF0000"  # Merah
     },
     1: {
-        "name": "Emerging Economy",
-        "description": "Lower Performance",
-        "color": "#98FB98"
+        "name": "Developing Economy",
+        "description": "Negara dengan tantangan ekonomi lebih besar",
+        "color": "#00FF00"  # Hijau
     },
     2: {
         "name": "Advanced Economy",
-        "description": "Higher Performance",
-        "color": "#87CEEB"
+        "description": "Negara dengan ekonomi lebih maju",
+        "color": "#0000FF"  # Biru
     }
 }
 
@@ -64,16 +64,16 @@ with col1:
     social_capital = st.slider(
         "Social Capital Score",
         min_value=0.0,
-        max_value=100.0,
-        value=50.0,
+        max_value=10.0,
+        value=5.0,
         help="Measure of social networks and community engagement"
     )
     
     governance = st.slider(
         "Governance Score",
         min_value=0.0,
-        max_value=100.0,
-        value=50.0,
+        max_value=10.0,
+        value=5.0,
         help="Measure of government effectiveness and institutional quality"
     )
 
@@ -81,8 +81,8 @@ with col2:
     economic_quality = st.slider(
         "Economic Quality Score",
         min_value=0.0,
-        max_value=100.0,
-        value=50.0,
+        max_value=10.0,
+        value=5.0,
         help="Measure of economic performance and stability"
     )
     
