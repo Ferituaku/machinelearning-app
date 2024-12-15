@@ -94,15 +94,11 @@ if st.button("Predict Cluster"):
         st.subheader("Prediction Results")
         
         # Define cluster descriptions
-        cluster_info = {
-            0: {"description": "Developing Economy (Medium Performance)", "color": "#FFA07A"},
-            1: {"description": "Emerging Economy (Lower Performance)", "color": "#98FB98"},
-            2: {"description": "Advanced Economy (Higher Performance)", "color": "#87CEEB"}
+        cluster_descriptions = {
+            0: "Developing Economy (Medium Performance)",
+            1: "Emerging Economy (Lower Performance)",
+            2: "Advanced Economy (Higher Performance)"
         }
-        cluster_data = cluster_info.get(cluster, {
-            "description": f"Unknown Cluster {cluster}",
-            "color": "#CCCCCC"  # Default gray color for unknown clusters
-        })
         
         # Show results with colored box
         result_color = ["#FFA07A", "#98FB98", "#87CEEB"][cluster]
